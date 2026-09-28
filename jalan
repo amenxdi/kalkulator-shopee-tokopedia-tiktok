@@ -1,9 +1,10 @@
-import streamlit as st
+import tkinter as tk
+from tkinter import ttk, messagebox, filedialog
 import json
 import os
 
 # ==============================================
-# DATA BIAYA SEMUA PLATFORM
+# DATA BIAYA SEMUA PLATFORM — Sesuaikan dengan ketentuan terbaru
 # ==============================================
 BIAYA_PLATFORM = {
     "Shopee": {
@@ -30,15 +31,15 @@ BIAYA_PLATFORM = {
     },
     "Tokopedia": {
         "tipe_toko": {
-            "Reguler":           {"lay_tetap": 0, "tra_persen": 1.0},
-            "Power Merchant":     {"lay_tetap": 0, "tra_persen": 1.0},
+            "Reguler":       {"lay_tetap": 0, "tra_persen": 1.0},
+            "Power Merchant": {"lay_tetap": 0, "tra_persen": 1.0},
             "Power Merchant Pro": {"lay_tetap": 0, "tra_persen": 0.5},
         },
         "kategori": {
-            "Umum":                   {"Reguler": 2.50, "Power Merchant": 2.00, "Power Merchant Pro": 1.50},
-            "Elektronik":             {"Reguler": 2.00, "Power Merchant": 1.50, "Power Merchant Pro": 1.00},
-            "Makanan & Minuman":      {"Reguler": 3.00, "Power Merchant": 2.50, "Power Merchant Pro": 2.00},
-            "Kesehatan & Kecantikan": {"Reguler": 2.50, "Power Merchant": 2.00, "Power Merchant Pro": 1.50},
+            "Umum":                     {"Reguler": 2.50, "Power Merchant": 2.00, "Power Merchant Pro": 1.50},
+            "Elektronik":               {"Reguler": 2.00, "Power Merchant": 1.50, "Power Merchant Pro": 1.00},
+            "Makanan & Minuman":        {"Reguler": 3.00, "Power Merchant": 2.50, "Power Merchant Pro": 2.00},
+            "Kesehatan & Kecantikan":   {"Reguler": 2.50, "Power Merchant": 2.00, "Power Merchant Pro": 1.50},
         },
         "default_toko": "Reguler"
     },
@@ -58,35 +59,32 @@ BIAYA_PLATFORM = {
 }
 
 KATA_KUNCI = {
-    "Pakaian & Aksesoris": ["baju", "celana", "kaos", "dress", "jaket", "sepatu", "sandal", "tas", "topi", "ikat pinggang", "perhiasan", "cincin", "kalung", "anting"],
-    "Elektronik": ["kabel", "charger", "adaptor", "lampu", "saklar", "stopkontak", "kipas", "setrika", "blender", "rice cooker", "speaker", "headset", "kamera", "radio"],
-    "HP & Aksesoris": ["hp", "handphone", "smartphone", "casing", "tempered", "kabel data", "baterai hp", "headset hp", "charger hp", "lcd", "touchscreen", "sim", "kartu memori", "powerbank"],
-    "Komputer & Aksesoris": ["laptop", "komputer", "pc", "mouse", "keyboard", "monitor", "printer", "kabel lan", "flashdisk", "hardisk", "ssd", "webcam", "mic"],
-    "Makanan & Minuman": ["makanan", "minuman", "snack", "keripik", "biskuit", "mie", "kopi", "teh", "susu", "gula", "beras", "telur", "daging", "sayur", "buah", "bumbu", "saus"],
-    "Kesehatan & Kecantikan": ["sabun", "sampo", "kosmetik", "masker", "krim", "lotion", "parfum", "obat", "vitamin", "suplemen", "perawatan", "wajah", "kulit", "rambut"],
-    "Ibu & Bayi": ["bayi", "anak", "popok", "dot", "botol susu", "bedak bayi", "baju bayi", "gendong", "mainan bayi", "perlengkapan ibu", "menyusui"],
-    "Rumah Tangga": ["piring", "sendok", "garpu", "gelas", "mangkuk", "ember", "sapu", "pel", "kain", "taplak", "gorden", "rak", "keranjang", "tempat sampah", "perabotan"],
-    "Otomotif": ["mobil", "motor", "helm", "ban", "oli", "spion", "lampu motor", "lampu mobil", "aksesoris mobil", "aksesoris motor", "kunci", "cover motor"],
-    "Hobi & Olahraga": ["buku", "alat tulis", "kertas", "mainan", "boneka", "bola", "raket", "baju olahraga", "sepatu olahraga", "tas olahraga", "alat musik", "seni", "koleksi"],
-    "Umum": [],
-    "Lainnya": [],
+    "Pakaian & Aksesoris":      ["baju", "celana", "kaos", "dress", "jaket", "sepatu", "sandal", "tas", "topi", "ikat pinggang", "perhiasan", "cincin", "kalung", "anting"],
+    "Elektronik":               ["kabel", "charger", "adaptor", "lampu", "saklar", "stopkontak", "kipas", "setrika", "blender", "rice cooker", "speaker", "headset", "kamera", "radio"],
+    "HP & Aksesoris":           ["hp", "handphone", "smartphone", "casing", "tempered", "kabel data", "baterai hp", "headset hp", "charger hp", "lcd", "touchscreen", "sim", "kartu memori", "powerbank"],
+    "Komputer & Aksesoris":     ["laptop", "komputer", "pc", "mouse", "keyboard", "monitor", "printer", "kabel lan", "flashdisk", "hardisk", "ssd", "webcam", "mic"],
+    "Makanan & Minuman":        ["makanan", "minuman", "snack", "keripik", "biskuit", "mie", "kopi", "teh", "susu", "gula", "beras", "telur", "daging", "sayur", "buah", "bumbu", "saus"],
+    "Kesehatan & Kecantikan":   ["sabun", "sampo", "kosmetik", "masker", "krim", "lotion", "parfum", "obat", "vitamin", "suplemen", "perawatan", "wajah", "kulit", "rambut"],
+    "Ibu & Bayi":               ["bayi", "anak", "popok", "dot", "botol susu", "bedak bayi", "baju bayi", "gendong", "mainan bayi", "perlengkapan ibu", "menyusui"],
+    "Rumah Tangga":             ["piring", "sendok", "garpu", "gelas", "mangkuk", "ember", "sapu", "pel", "kain", "taplak", "gorden", "rak", "keranjang", "tempat sampah", "perabotan"],
+    "Otomotif":                 ["mobil", "motor", "helm", "ban", "oli", "spion", "lampu motor", "lampu mobil", "aksesoris mobil", "aksesoris motor", "kunci", "cover motor"],
+    "Hobi & Olahraga":          ["buku", "alat tulis", "kertas", "mainan", "boneka", "bola", "raket", "baju olahraga", "sepatu olahraga", "tas olahraga", "alat musik", "seni", "koleksi"],
+    "Umum":                     [],
+    "Lainnya":                  [],
 }
 
-PPN_DEFAULT = 12.0
+PPN = 12.0
+hasil_teks = ""
+daftar_produk = []
+FILE_SIMPANAN = "data_harga.json"
 
 # ==============================================
-# INISIALISASI SESI
-# ==============================================
-if "daftar_produk" not in st.session_state:
-    st.session_state.daftar_produk = []
-
-# ==============================================
-# FUNGSI BANTU
+# DETEKSI KATEGORI OTOMATIS
 # ==============================================
 def deteksi_kategori(nama_produk, platform):
     teks = nama_produk.lower().strip()
     if not teks:
-        return list(BIAYA_PLATFORM[platform]["kategori"].keys())[0]
+        return "Pilih Kategori"
     daftar_kategori = list(BIAYA_PLATFORM[platform]["kategori"].keys())
     for kat in daftar_kategori:
         if kat in KATA_KUNCI:
@@ -95,209 +93,463 @@ def deteksi_kategori(nama_produk, platform):
                     return kat
     return daftar_kategori[-1]
 
-def format_uang(angka):
-    return f"Rp {angka:,.0f}".replace(",", ".")
+def perbarui_kategori_otomatis(*args):
+    nama = e_nama.get()
+    plat = var_platform.get()
+    if plat in BIAYA_PLATFORM:
+        var_kategori.set(deteksi_kategori(nama, plat))
+    perbarui_biaya()
 
-# ==============================================
-# JUDUL
-# ==============================================
-st.set_page_config(page_title="Kalkulator Harga Jual", page_icon="🛒", layout="wide")
-st.title("🛒 KALKULATOR HARGA JUAL — Shopee • Tokopedia • TikTok")
-st.markdown("---")
+def perbarui_daftar_toko(*args):
+    plat = var_platform.get()
+    if plat not in BIAYA_PLATFORM:
+        return
+    toko_data = BIAYA_PLATFORM[plat]["tipe_toko"]
+    for w in f1a.winfo_children():
+        w.destroy()
+    for t in toko_data.keys():
+        tk.Radiobutton(f1a, text=t, variable=var_toko, value=t,
+                       bg=WARNA_LATAR, fg=WARNA_TEKS, selectcolor="#FFE0D0",
+                       command=perbarui_biaya).pack(side="left", padx=6)
+    var_toko.set(BIAYA_PLATFORM[plat]["default_toko"])
+    perbarui_daftar_kategori()
 
-# ==============================================
-# BAGIAN KIRI — FORMULIR
-# ==============================================
-col1, col2 = st.columns([2, 1])
+def perbarui_daftar_kategori(*args):
+    plat = var_platform.get()
+    if plat not in BIAYA_PLATFORM:
+        return
+    kat_data = BIAYA_PLATFORM[plat]["kategori"]
+    cb_kategori["values"] = list(kat_data.keys())
+    var_kategori.set("Pilih Kategori")
+    perbarui_biaya()
 
-with col1:
-    st.subheader("📝 Data Produk")
-    
-    platform = st.selectbox("Pilih Platform", ["Shopee", "Tokopedia", "TikTok Shop"])
-    
-    tipe_toko_list = list(BIAYA_PLATFORM[platform]["tipe_toko"].keys())
-    tipe_toko = st.selectbox("Jenis Toko", tipe_toko_list, 
-                             index=tipe_toko_list.index(BIAYA_PLATFORM[platform]["default_toko"]))
-    
-    nama_produk = st.text_input("Nama Produk", placeholder="Contoh: Kabel data HP")
-    
-    # Deteksi kategori otomatis
-    kat_terdeteksi = deteksi_kategori(nama_produk, platform)
-    kategori_list = list(BIAYA_PLATFORM[platform]["kategori"].keys())
-    idx_kat = kategori_list.index(kat_terdeteksi) if kat_terdeteksi in kategori_list else 0
-    kategori = st.selectbox("Kategori Produk", kategori_list, index=idx_kat)
-    
-    st.markdown("---")
-    st.subheader("💰 Data Biaya")
-    
-    pokok = st.number_input("Harga Pokok Satuan (Rp)", min_value=0.0, step=100.0, format="%.0f")
-    jumlah = st.number_input("Jumlah Barang", min_value=1, value=1, step=1)
-    untung = st.number_input("Keuntungan Total (Rp)", min_value=0.0, step=100.0, format="%.0f")
-    
-    st.markdown("---")
-    st.subheader("⚙️ Biaya Platform")
-    
-    # Ambil biaya otomatis
-    data_toko = BIAYA_PLATFORM[platform]["tipe_toko"][tipe_toko]
-    lay_persen_otomatis = BIAYA_PLATFORM[platform]["kategori"][kategori][tipe_toko]
-    
-    col_b1, col_b2 = st.columns(2)
-    with col_b1:
-        lay_p = st.number_input("Biaya Layanan (%)", value=float(lay_persen_otomatis), step=0.05, format="%.2f")
-        lay_t = st.number_input("Biaya Tetap (Rp)", value=float(data_toko["lay_tetap"]), step=100.0, format="%.0f")
-    with col_b2:
-        tra_p = st.number_input("Biaya Transaksi (%)", value=float(data_toko["tra_persen"]), step=0.05, format="%.2f")
-        ppn_p = st.number_input("PPN (%)", value=float(PPN_DEFAULT), step=0.5, format="%.2f")
-
-    hitung_btn = st.button("✅ HITUNG HARGA", type="primary", use_container_width=True)
-
-# ==============================================
-# PROSES HITUNG
-# ==============================================
-hasil = None
-if hitung_btn:
-    total_persen = lay_p + tra_p + ppn_p
-    
-    if total_persen >= 100:
-        st.error("❌ Total persentase tidak boleh 100% atau lebih!")
+def perbarui_biaya(*args):
+    plat = var_platform.get()
+    toko = var_toko.get()
+    kat = var_kategori.get()
+    if (plat in BIAYA_PLATFORM and 
+        toko in BIAYA_PLATFORM[plat]["tipe_toko"] and 
+        kat in BIAYA_PLATFORM[plat]["kategori"]):
+        data = BIAYA_PLATFORM[plat]["tipe_toko"][toko]
+        lay_persen = BIAYA_PLATFORM[plat]["kategori"][kat][toko]
+        entry_lay_p.delete(0, tk.END); entry_lay_p.insert(0, f"{lay_persen:.2f}")
+        entry_lay_t.delete(0, tk.END); entry_lay_t.insert(0, f"{data['lay_tetap']}")
+        entry_tra.delete(0, tk.END); entry_tra.insert(0, f"{data['tra_persen']:.2f}")
+        entry_ppn.delete(0, tk.END); entry_ppn.insert(0, f"{PPN:.2f}")
     else:
-        total_modal = pokok * jumlah
+        for w in [entry_lay_p, entry_lay_t, entry_tra, entry_ppn]:
+            w.delete(0, tk.END)
+
+# ==============================================
+# JENDELA HASIL TERPISAH
+# ==============================================
+def buka_jendela_hasil():
+    if not hasil_teks:
+        messagebox.showwarning("Belum Ada Hasil", "Silakan tekan HITUNG terlebih dahulu!")
+        return
+    
+    jendela = tk.Toplevel(root)
+    jendela.title("📊 Hasil Kalkulasi Harga")
+    jendela.geometry("520x580")
+    jendela.configure(bg=WARNA_LATAR)
+    jendela.transient(root)
+    jendela.grab_set()
+    
+    tk.Label(jendela, text="📊 HASIL KALKULASI HARGA",
+             font=("Arial", 14, "bold"), bg=WARNA_UTAMA, fg="white",
+             pady=12).pack(fill="x")
+    
+    f_teks = tk.Frame(jendela, bg=WARNA_LATAR)
+    f_teks.pack(fill="both", expand=True, padx=15, pady=15)
+    
+    teks_hasil = tk.Text(f_teks, font=("Consolas", 11), bg="white", fg="#333",
+                         padx=15, pady=15, wrap="word", relief="flat")
+    teks_hasil.pack(side="left", fill="both", expand=True)
+    
+    scroll = ttk.Scrollbar(f_teks, orient="vertical", command=teks_hasil.yview)
+    scroll.pack(side="right", fill="y")
+    teks_hasil.configure(yscrollcommand=scroll.set)
+    
+    teks_hasil.insert("1.0", hasil_teks)
+    teks_hasil.config(state="disabled")
+    
+    f_btn = tk.Frame(jendela, bg=WARNA_LATAR)
+    f_btn.pack(fill="x", padx=15, pady=10)
+    
+    tk.Button(f_btn, text="📋 SALIN", command=lambda: salin_dari_jendela(jendela),
+              bg=WARNA_SEKUNDER, fg="white", font=("Arial", 10, "bold"),
+              padx=15, pady=8).pack(side="left", fill="x", expand=True, padx=3)
+    tk.Button(f_btn, text="💾 SIMPAN KE DAFTAR", command=lambda: simpan_ke_daftar(),
+              bg="#2E7D32", fg="white", font=("Arial", 10, "bold"),
+              padx=15, pady=8).pack(side="left", fill="x", expand=True, padx=3)
+    tk.Button(f_btn, text="❌ TUTUP", command=jendela.destroy,
+              bg="#D32F2F", fg="white", font=("Arial", 10, "bold"),
+              padx=15, pady=8).pack(side="right", fill="x", expand=True, padx=3)
+
+def salin_dari_jendela(jendela):
+    root.clipboard_clear()
+    root.clipboard_append(hasil_teks)
+    messagebox.showinfo("Berhasil ✅", "Hasil telah disalin!", parent=jendela)
+
+# ==============================================
+# FUNGSI HITUNG
+# ==============================================
+def hitung():
+    global hasil_teks
+    try:
+        nama_produk = e_nama.get().strip() or "Produk Tanpa Nama"
+        plat = var_platform.get()
+        if plat not in BIAYA_PLATFORM:
+            messagebox.showwarning("Peringatan", "Pilih Platform dulu!")
+            return
+        
+        def ubah_angka(s): return float(s.strip().replace(',', '.')) if s.strip() else 0.0
+        
+        pokok = ubah_angka(e_pokok.get())
+        jml_str = e_jml.get().strip()
+        jml = int(jml_str) if jml_str else 1
+        if jml <= 0:
+            raise ValueError("Jumlah harus > 0")
+        untung = ubah_angka(e_untung.get())
+        
+        lay_p = ubah_angka(entry_lay_p.get())
+        lay_t = ubah_angka(entry_lay_t.get())
+        tra_p = ubah_angka(entry_tra.get())
+        ppn_p = ubah_angka(entry_ppn.get())
+
+        total_persen = lay_p + tra_p + ppn_p
+        if total_persen >= 100:
+            messagebox.showerror("Salah", "Total persentase tidak boleh 100% atau lebih!")
+            return
+        
+        total_modal = pokok * jml
         target_bersih = total_modal + untung
-        
-        # Rumus inti
         harga_total = (target_bersih + lay_t) / (1 - total_persen / 100)
-        harga_satuan = harga_total / jumlah
-        
+        harga_satuan = harga_total / jml
+
         biaya_lay = harga_total * (lay_p / 100) + lay_t
         biaya_tra = harga_total * (tra_p / 100)
         biaya_ppn = harga_total * (ppn_p / 100)
         potong = biaya_lay + biaya_tra + biaya_ppn
         diterima = harga_total - potong
-        
-        hasil = {
-            "platform": platform,
-            "nama_produk": nama_produk or "Produk Tanpa Nama",
-            "tipe_toko": tipe_toko,
-            "kategori": kategori,
-            "pokok": pokok,
-            "jumlah": jumlah,
-            "untung": untung,
-            "harga_total": harga_total,
-            "harga_satuan": harga_satuan,
-            "total_modal": total_modal,
-            "biaya_lay": biaya_lay,
-            "biaya_tra": biaya_tra,
-            "biaya_ppn": biaya_ppn,
-            "potong": potong,
-            "diterima": diterima,
-            "lay_p": lay_p,
-            "lay_t": lay_t,
-            "tra_p": tra_p,
-            "ppn_p": ppn_p,
-        }
-        
-        st.success("✅ Perhitungan Selesai!")
-        
-        # Tampilkan Hasil
-        st.markdown("---")
-        st.subheader("📊 Hasil Perhitungan")
-        
-        st.info(f"""
-        **Nama Produk:** {hasil['nama_produk']}  
-        **Platform:** {hasil['platform']} | **Toko:** {hasil['tipe_toko']} | **Kategori:** {hasil['kategori']}
-        """)
-        
-        col_h1, col_h2 = st.columns(2)
-        with col_h1:
-            st.metric("Harga Pokok Satuan", format_uang(hasil['pokok']))
-            st.metric("Jumlah Barang", f"{hasil['jumlah']} buah")
-            st.metric("Total Modal", format_uang(hasil['total_modal']))
-            st.metric("Keuntungan Diinginkan", format_uang(hasil['untung']))
-        
-        with col_h2:
-            st.metric("💰 Harga Jual Satuan", format_uang(hasil['harga_satuan']))
-            st.metric("Harga Jual Total", format_uang(hasil['harga_total']))
-            st.metric("✅ Diterima ke Rekening", format_uang(hasil['diterima']))
-        
-        st.markdown("---")
-        st.subheader("📋 Rincian Biaya")
-        
-        st.write(f"- **Biaya Layanan:** {format_uang(hasil['biaya_lay'])} ({hasil['lay_p']:.2f}% + {format_uang(hasil['lay_t'])})")
-        st.write(f"- **Biaya Transaksi:** {format_uang(hasil['biaya_tra'])} ({hasil['tra_p']:.2f}%)")
-        st.write(f"- **PPN:** {format_uang(hasil['biaya_ppn'])} ({hasil['ppn_p']:.2f}%)")
-        st.write(f"- **Total Potongan:** {format_uang(hasil['potong'])}")
-        
-        # Simpan ke daftar
-        if st.button("💾 Simpan ke Daftar", use_container_width=True):
-            st.session_state.daftar_produk.append(hasil)
-            st.success("✅ Disimpan ke daftar!")
-            st.rerun()
 
-# ==============================================
-# BAGIAN KANAN — DAFTAR PRODUK
-# ==============================================
-with col2:
-    st.header("📦 Daftar Produk")
-    
-    # Tombol unduh & muat
-    col_dl, col_up, col_cl = st.columns(3)
-    with col_dl:
-        if st.session_state.daftar_produk:
-            json_data = json.dumps(st.session_state.daftar_produk, ensure_ascii=False, indent=2)
-            st.download_button("💾", data=json_data, file_name="daftar_harga.json", mime="application/json")
-    with col_up:
-        file_unggah = st.file_uploader("📂", type="json", label_visibility="collapsed")
-        if file_unggah:
-            try:
-                data_muat = json.load(file_unggah)
-                st.session_state.daftar_produk = data_muat
-                st.success(f"✅ Dimuat {len(data_muat)} produk!")
-            except:
-                st.error("❌ Gagal memuat file")
-    with col_cl:
-        if st.button("🗑️", help="Kosongkan Daftar"):
-            st.session_state.daftar_produk = []
-            st.rerun()
-    
-    # Tampilkan daftar
-    if not st.session_state.daftar_produk:
-        st.info("Belum ada produk. Hitung lalu simpan!")
+        hasil_teks = (
+            f"{'='*40}\n"
+            f"    KALKULASI HARGA {plat.upper()}\n"
+            f"{'='*40}\n"
+            f"Nama Produk    : {nama_produk}\n"
+            f"Platform       : {plat}\n"
+            f"Jenis Toko     : {var_toko.get()}\n"
+            f"Kategori       : {var_kategori.get()}\n"
+            f"{'-'*40}\n"
+            f"Harga Pokok    : Rp {pokok:,.0f}\n"
+            f"Jumlah Barang  : {jml}\n"
+            f"Keuntungan     : Rp {untung:,.0f}\n"
+            f"{'-'*40}\n"
+            f"Harga Jual Total : Rp {harga_total:,.0f}\n"
+            f"Harga Jual Satuan: Rp {harga_satuan:,.0f}\n"
+            f"{'-'*40}\n"
+            f"Total Modal     : Rp {total_modal:,.0f}\n"
+            f"Biaya Layanan   : Rp {biaya_lay:,.0f}  ({lay_p:.2f}% + Rp {lay_t:,.0f})\n"
+            f"Biaya Transaksi : Rp {biaya_tra:,.0f}  ({tra_p:.2f}%)\n"
+            f"PPN             : Rp {biaya_ppn:,.0f}  ({ppn_p:.2f}%)\n"
+            f"Total Potongan  : Rp {potong:,.0f}\n"
+            f"{'-'*40}\n"
+            f"✅ DITERIMA KE REKENING : Rp {diterima:,.0f}\n"
+            f"{'='*40}\n"
+        )
+
+        buka_jendela_hasil()
+
+    except ValueError as er:
+        messagebox.showerror("Input Salah", f"Masukkan angka yang valid!\nGunakan titik untuk desimal.\nKesalahan: {er}")
+
+def salin_hasil():
+    if hasil_teks:
+        root.clipboard_clear()
+        root.clipboard_append(hasil_teks)
+        messagebox.showinfo("Berhasil ✅", "Hasil telah disalin!")
     else:
-        for i, p in enumerate(st.session_state.daftar_produk, 1):
-            with st.expander(f"{i}. [{p['platform']}] {p['nama_produk'][:20]}..."):
-                st.write(f"**Satuan:** {format_uang(p['harga_satuan'])}")
-                st.write(f"**Diterima:** {format_uang(p['diterima'])}")
-                st.write(f"**Modal:** {format_uang(p['total_modal'])}")
-                st.write(f"**Untung:** {format_uang(p['untung'])}")
-                
-                # Tombol hapus
-                if st.button(f"🗑️ Hapus #{i}", key=f"del_{i}"):
-                    st.session_state.daftar_produk.pop(i-1)
-                    st.rerun()
-        
-        # Ekspor Teks
-        if st.button("📄 Ekspor Semua ke Teks"):
-            teks_semua = ""
-            for p in st.session_state.daftar_produk:
-                teks_semua += f"{'='*40}\n"
-                teks_semua += f"    KALKULASI HARGA {p['platform']}\n"
-                teks_semua += f"{'='*40}\n"
-                teks_semua += f"Nama Produk    : {p['nama_produk']}\n"
-                teks_semua += f"Platform       : {p['platform']}\n"
-                teks_semua += f"Jenis Toko     : {p['tipe_toko']}\n"
-                teks_semua += f"Kategori       : {p['kategori']}\n"
-                teks_semua += f"{'-'*40}\n"
-                teks_semua += f"Harga Pokok    : {format_uang(p['pokok'])}\n"
-                teks_semua += f"Jumlah Barang  : {p['jumlah']}\n"
-                teks_semua += f"Keuntungan     : {format_uang(p['untung'])}\n"
-                teks_semua += f"{'-'*40}\n"
-                teks_semua += f"Harga Jual Satuan: {format_uang(p['harga_satuan'])}\n"
-                teks_semua += f"Harga Jual Total : {format_uang(p['harga_total'])}\n"
-                teks_semua += f"{'-'*40}\n"
-                teks_semua += f"✅ DITERIMA     : {format_uang(p['diterima'])}\n"
-                teks_semua += f"{'='*40}\n\n"
-            
-            st.download_button("📥 Unduh Hasil Teks", data=teks_semua, file_name="hasil_kalkulasi.txt")
+        messagebox.showwarning("Belum Ada Hasil", "Silakan tekan HITUNG dulu!")
 
-st.markdown("---")
-st.caption("💡 Biaya otomatis mengikuti ketentuan masing-masing platform — bisa diubah manual jika perlu")
+# ==============================================
+# PENYIMPANAN DAFTAR PRODUK
+# ==============================================
+def simpan_ke_daftar():
+    produk = {
+        "nama": e_nama.get().strip() or "Produk Tanpa Nama",
+        "platform": var_platform.get(),
+        "toko": var_toko.get(),
+        "kategori": var_kategori.get(),
+        "pokok": e_pokok.get(),
+        "jumlah": e_jml.get(),
+        "untung": e_untung.get(),
+        "hasil": hasil_teks
+    }
+    daftar_produk.append(produk)
+    perbarui_listbox()
+    messagebox.showinfo("Tersimpan ✅", "Produk telah ditambahkan ke daftar!")
+
+def perbarui_listbox():
+    list_produk.delete(0, tk.END)
+    for i, p in enumerate(daftar_produk, 1):
+        list_produk.insert(tk.END, f"{i}. [{p['platform']}] {p['nama']}")
+
+def muat_ke_formulasi(event):
+    idx = list_produk.curselection()
+    if not idx:
+        return
+    p = daftar_produk[idx[0]]
+    e_nama.delete(0, tk.END); e_nama.insert(0, p["nama"])
+    var_platform.set(p["platform"])
+    root.update()
+    var_toko.set(p["toko"])
+    var_kategori.set(p["kategori"])
+    e_pokok.delete(0, tk.END); e_pokok.insert(0, p["pokok"])
+    e_jml.delete(0, tk.END); e_jml.insert(0, p["jumlah"])
+    e_untung.delete(0, tk.END); e_untung.insert(0, p["untung"])
+
+def hapus_dari_daftar():
+    idx = list_produk.curselection()
+    if not idx:
+        messagebox.showwarning("Peringatan", "Pilih produk yang akan dihapus!")
+        return
+    if messagebox.askyesno("Konfirmasi", "Yakin ingin menghapus produk ini?"):
+        del daftar_produk[idx[0]]
+        perbarui_listbox()
+
+def simpan_ke_berkas():
+    if not daftar_produk:
+        messagebox.showwarning("Kosong", "Belum ada data untuk disimpan!")
+        return
+    berkas = filedialog.asksaveasfilename(
+        defaultextension=".json",
+        filetypes=[("Berkas Data", "*.json"), ("Semua Berkas", "*.*")],
+        initialfile=FILE_SIMPANAN
+    )
+    if not berkas:
+        return
+    try:
+        with open(berkas, "w", encoding="utf-8") as f:
+            json.dump(daftar_produk, f, ensure_ascii=False, indent=2)
+        messagebox.showinfo("Tersimpan ✅", f"Data disimpan di:\n{berkas}")
+    except Exception as e:
+        messagebox.showerror("Gagal", f"Gagal menyimpan: {e}")
+
+def muat_dari_berkas():
+    berkas = filedialog.askopenfilename(
+        filetypes=[("Berkas Data", "*.json"), ("Semua Berkas", "*.*")]
+    )
+    if not berkas:
+        return
+    try:
+        with open(berkas, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        daftar_produk.clear()
+        daftar_produk.extend(data)
+        perbarui_listbox()
+        messagebox.showinfo("Berhasil ✅", f"Dimuat {len(daftar_produk)} produk!")
+    except Exception as e:
+        messagebox.showerror("Gagal", f"Gagal memuat: {e}")
+
+def ekspor_teks():
+    if not daftar_produk:
+        messagebox.showwarning("Kosong", "Belum ada data!")
+        return
+    berkas = filedialog.asksaveasfilename(
+        defaultextension=".txt",
+        filetypes=[("Berkas Teks", "*.txt"), ("Semua Berkas", "*.*")],
+        initialfile="daftar_harga.txt"
+    )
+    if not berkas:
+        return
+    try:
+        with open(berkas, "w", encoding="utf-8") as f:
+            for p in daftar_produk:
+                f.write(p["hasil"] + "\n")
+        messagebox.showinfo("Tersimpan ✅", f"Diekspor ke:\n{berkas}")
+    except Exception as e:
+        messagebox.showerror("Gagal", f"Gagal mengekspor: {e}")
+
+def reset():
+    e_nama.delete(0, tk.END)
+    var_platform.set("Pilih Platform")
+    var_toko.set("Pilih")
+    var_kategori.set("Pilih Kategori")
+    for w in [e_pokok, e_jml, e_untung, entry_lay_p, entry_lay_t, entry_tra, entry_ppn]:
+        w.delete(0, tk.END)
+
+# ==============================================
+# KALKULATOR BANTU
+# ==============================================
+def buka_kalkulator():
+    kalk = tk.Toplevel(root)
+    kalk.title("Kalkulator")
+    kalk.geometry("300x380")
+    kalk.resizable(False, False)
+    kalk.configure(bg=WARNA_LATAR)
+    kalk.transient(root)
+    kalk.grab_set()
+    ekspresi = tk.StringVar()
+
+    def tekan(t): ekspresi.set(ekspresi.get() + str(t))
+    def hitung_kalk():
+        try: ekspresi.set(str(eval(ekspresi.get())))
+        except: ekspresi.set("Error")
+    def bersih(): ekspresi.set("")
+    def pakai():
+        v = ekspresi.get()
+        if v and v != "Error":
+            e_pokok.delete(0, tk.END)
+            e_pokok.insert(0, v)
+            kalk.destroy()
+
+    ttk.Entry(kalk, textvariable=ekspresi, font=("Arial",18), justify="right").pack(fill="x", padx=10, pady=10)
+    f_btn = tk.Frame(kalk, bg=WARNA_LATAR)
+    f_btn.pack(padx=5, pady=5)
+    tombol = [
+        ("7",1,0),("8",1,1),("9",1,2),("/",1,3),
+        ("4",2,0),("5",2,1),("6",2,2),("*",2,3),
+        ("1",3,0),("2",3,1),("3",3,2),("-",3,3),
+        ("0",4,0),(".",4,1),("=",4,2),("+",4,3),
+    ]
+    for txt, brs, klm in tombol:
+        if txt == "=":
+            t = tk.Button(f_btn, text=txt, width=5, font=("Arial",14,"bold"),
+                          bg=WARNA_UTAMA, fg="white", command=hitung_kalk)
+        elif txt in "+-*/":
+            t = tk.Button(f_btn, text=txt, width=5, font=("Arial",14),
+                          bg=WARNA_SEKUNDER, fg="white", command=lambda t=txt: tekan(t))
+        else:
+            t = tk.Button(f_btn, text=txt, width=5, font=("Arial",14),
+                          bg="#FFFFFF", fg="#333333", command=lambda t=txt: tekan(t))
+        t.grid(row=brs, column=klm, padx=3, pady=3)
+    tk.Button(f_btn, text="📥 PAKAI", width=10, font=("Arial",10,"bold"),
+              bg=WARNA_SEKUNDER, fg="white", command=pakai).grid(row=5, column=0, columnspan=2, padx=3, pady=5)
+    tk.Button(f_btn, text="C", width=10, font=("Arial",12,"bold"),
+              bg="#D32F2F", fg="white", command=bersih).grid(row=5, column=2, columnspan=2, padx=3, pady=5)
+
+# ==============================================
+# TEMA WARNA & ANTARMUKA UTAMA
+# ==============================================
+WARNA_UTAMA = "#EE4D2D"
+WARNA_SEKUNDER = "#FF7F45"
+WARNA_LATAR = "#FEF2E8"
+WARNA_TEKS = "#333333"
+
+root = tk.Tk()
+root.title("Kalkulator Harga — Shopee • Tokopedia • TikTok")
+root.geometry("750x650")
+root.resizable(True, True)
+root.configure(bg=WARNA_LATAR)
+
+ft = ("Arial", 10)
+fh = ("Arial", 10, "bold")
+
+tk.Label(root, text="🛒 KALKULATOR HARGA — Shopee • Tokopedia • TikTok",
+         font=("Arial", 14, "bold"), bg=WARNA_UTAMA, fg="white",
+         pady=10).pack(fill="x")
+
+# Kontainer Kiri & Kanan
+f_utama = tk.Frame(root, bg=WARNA_LATAR)
+f_utama.pack(fill="both", expand=True, padx=10, pady=5)
+
+f_kiri = tk.Frame(f_utama, bg=WARNA_LATAR)
+f_kiri.pack(side="left", fill="both", expand=True, padx=5)
+
+f_kanan = tk.Frame(f_utama, bg=WARNA_LATAR, width=280)
+f_kanan.pack(side="right", fill="both", expand=False, padx=5)
+
+# ============= BAGIAN KIRI — FORMULIR =============
+# Platform
+f_plat = tk.Frame(f_kiri, bg=WARNA_LATAR)
+f_plat.pack(fill="x", pady=5)
+tk.Label(f_plat, text="Platform:", font=fh, bg=WARNA_LATAR, fg=WARNA_TEKS).pack(anchor="w")
+var_platform = tk.StringVar(value="Pilih Platform")
+var_platform.trace_add("write", perbarui_daftar_toko)
+cb_platform = ttk.Combobox(f_plat, textvariable=var_platform, state="readonly", font=ft)
+cb_platform["values"] = ["Shopee", "Tokopedia", "TikTok Shop"]
+cb_platform.pack(fill="x", padx=2, pady=3)
+
+# Nama Produk
+f_nama = tk.Frame(f_kiri, bg=WARNA_LATAR)
+f_nama.pack(fill="x", pady=5)
+tk.Label(f_nama, text="Nama Produk:", font=fh, bg=WARNA_LATAR, fg=WARNA_TEKS).pack(anchor="w")
+e_nama = tk.Entry(f_nama, font=("Arial",11))
+e_nama.pack(fill="x", padx=2, pady=3)
+e_nama.bind("<KeyRelease>", perbarui_kategori_otomatis)
+
+# Jenis Toko
+f1 = tk.Frame(f_kiri, bg=WARNA_LATAR); f1.pack(fill="x", pady=5)
+tk.Label(f1, text="Jenis Toko:", font=fh, bg=WARNA_LATAR, fg=WARNA_TEKS).pack(anchor="w")
+f1a = tk.Frame(f1, bg=WARNA_LATAR); f1a.pack(fill="x")
+var_toko = tk.StringVar(value="Pilih")
+var_toko.trace_add("write", perbarui_biaya)
+
+# Kategori
+f2 = tk.Frame(f_kiri, bg=WARNA_LATAR); f2.pack(fill="x", pady=5)
+tk.Label(f2, text="Kategori Produk:", font=fh, bg=WARNA_LATAR, fg=WARNA_TEKS).pack(anchor="w")
+var_kategori = tk.StringVar(value="Pilih Kategori")
+var_kategori.trace_add("write", perbarui_biaya)
+cb_kategori = ttk.Combobox(f2, textvariable=var_kategori, state="readonly", font=ft)
+cb_kategori.pack(fill="x", padx=2, pady=3)
+
+ttk.Separator(f_kiri).pack(fill="x", pady=8)
+
+def baris(parent, label, kalk=False):
+    f = tk.Frame(parent, bg=WARNA_LATAR); f.pack(fill="x", pady=2)
+    tk.Label(f, text=label, font=ft, bg=WARNA_LATAR, fg=WARNA_TEKS).pack(side="left")
+    e = tk.Entry(f, width=14, font=ft)
+    e.pack(side="right")
+    if kalk:
+        tk.Button(f, text="🔢", command=buka_kalkulator,
+                  font=("Arial",9), padx=4, pady=1, bg=WARNA_SEKUNDER, fg="white").pack(side="right", padx=3)
+    return e
+
+e_pokok  = baris(f_kiri, "Harga Pokok Satuan (Rp):", True)
+e_jml    = baris(f_kiri, "Jumlah Barang (Kosong=1):")
+e_untung = baris(f_kiri, "Keuntungan Total (Rp):")
+
+ttk.Separator(f_kiri).pack(fill="x", pady=8)
+tk.Label(f_kiri, text="Biaya Otomatis", font=fh, bg=WARNA_LATAR, fg=WARNA_TEKS).pack(anchor="w")
+entry_lay_p = baris(f_kiri, "Biaya Layanan (%):")
+entry_lay_t = baris(f_kiri, "Biaya Tetap (Rp):")
+entry_tra   = baris(f_kiri, "Biaya Transaksi (%):")
+entry_ppn   = baris(f_kiri, "PPN (%):")
+
+fbtn = tk.Frame(f_kiri, bg=WARNA_LATAR); fbtn.pack(pady=15)
+tk.Button(fbtn, text="✅ HITUNG", command=hitung,
+          bg=WARNA_UTAMA, fg="white", font=fh, padx=20, pady=8).grid(row=0, column=0, padx=5)
+tk.Button(fbtn, text="📋 SALIN", command=salin_hasil,
+          bg=WARNA_SEKUNDER, fg="white", font=fh, padx=15, pady=8).grid(row=0, column=1, padx=5)
+tk.Button(fbtn, text="🔄 RESET", command=reset,
+          bg="#F57C00", fg="white", font=fh, padx=15, pady=8).grid(row=0, column=2, padx=5)
+
+# ============= BAGIAN KANAN — DAFTAR PRODUK =============
+tk.Label(f_kanan, text="📦 DAFTAR PRODUK", font=("Arial", 11, "bold"),
+         bg=WARNA_UTAMA, fg="white", pady=6).pack(fill="x")
+
+f_list = tk.Frame(f_kanan, bg=WARNA_LATAR)
+f_list.pack(fill="both", expand=True, pady=8)
+
+list_produk = tk.Listbox(f_list, font=("Arial", 10), height=15, bg="white", activestyle="dotbox")
+list_produk.pack(side="left", fill="both", expand=True)
+list_produk.bind("<Double-Button-1>", muat_ke_formulasi)
+
+scroll_list = ttk.Scrollbar(f_list, orient="vertical", command=list_produk.yview)
+scroll_list.pack(side="right", fill="y")
+list_produk.configure(yscrollcommand=scroll_list.set)
+
+f_btn2 = tk.Frame(f_kanan, bg=WARNA_LATAR)
+f_btn2.pack(fill="x", pady=5)
+
+tk.Button(f_btn2, text="💾 SIMPAN FILE", command=simpan_ke_berkas,
+          bg="#2E7D32", fg="white", font=("Arial",9,"bold"), padx=8, pady=5).grid(row=0, column=0, padx=2, pady=2)
+tk.Button(f_btn2, text="📂 MUAT FILE", command=muat_dari_berkas,
+          bg="#1565C0", fg="white", font=("Arial",9,"bold"), padx=8, pady=5).grid(row=0, column=1, padx=2, pady=2)
+tk.Button(f_btn2, text="📄 EKSPOR TXT", command=ekspor_teks,
+          bg="#6A1B9A", fg="white", font=("Arial",9,"bold"), padx=8, pady=5).grid(row=1, column=0, padx=2, pady=2)
+tk.Button(f_btn2, text="🗑️ HAPUS", command=hapus_dari_daftar,
+          bg="#C62828", fg="white", font=("Arial",9,"bold"), padx=8, pady=5).grid(row=1, column=1, padx=2, pady=2)
+
+root.mainloop()
