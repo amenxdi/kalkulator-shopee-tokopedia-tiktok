@@ -1,0 +1,303 @@
+import streamlit as st
+import json
+import os
+
+# ==============================================
+# DATA BIAYA SEMUA PLATFORM
+# ==============================================
+BIAYA_PLATFORM = {
+    "Shopee": {
+        "tipe_toko": {
+            "Reguler":    {"lay_tetap": 1250, "tra_persen": 1.0},
+            "Terpilih":   {"lay_tetap": 1250, "tra_persen": 1.0},
+            "Star":       {"lay_tetap": 1250, "tra_persen": 1.0},
+            "Star+":      {"lay_tetap": 1250, "tra_persen": 1.0},
+        },
+        "kategori": {
+            "Pakaian & Aksesoris":      {"Reguler": 2.00, "Terpilih": 1.50, "Star": 1.00, "Star+": 0.50},
+            "Elektronik":               {"Reguler": 2.00, "Terpilih": 1.50, "Star": 1.00, "Star+": 0.50},
+            "HP & Aksesoris":           {"Reguler": 1.50, "Terpilih": 1.00, "Star": 0.75, "Star+": 0.35},
+            "Komputer & Aksesoris":     {"Reguler": 2.00, "Terpilih": 1.50, "Star": 1.00, "Star+": 0.50},
+            "Makanan & Minuman":        {"Reguler": 3.00, "Terpilih": 2.50, "Star": 2.00, "Star+": 1.00},
+            "Kesehatan & Kecantikan":   {"Reguler": 2.00, "Terpilih": 1.50, "Star": 1.00, "Star+": 0.50},
+            "Ibu & Bayi":               {"Reguler": 2.00, "Terpilih": 1.50, "Star": 1.00, "Star+": 0.50},
+            "Rumah Tangga":             {"Reguler": 2.00, "Terpilih": 1.50, "Star": 1.00, "Star+": 0.50},
+            "Otomotif":                 {"Reguler": 2.00, "Terpilih": 1.50, "Star": 1.00, "Star+": 0.50},
+            "Hobi & Olahraga":          {"Reguler": 2.00, "Terpilih": 1.50, "Star": 1.00, "Star+": 0.50},
+            "Lainnya":                  {"Reguler": 2.00, "Terpilih": 1.50, "Star": 1.00, "Star+": 0.50},
+        },
+        "default_toko": "Reguler"
+    },
+    "Tokopedia": {
+        "tipe_toko": {
+            "Reguler":           {"lay_tetap": 0, "tra_persen": 1.0},
+            "Power Merchant":     {"lay_tetap": 0, "tra_persen": 1.0},
+            "Power Merchant Pro": {"lay_tetap": 0, "tra_persen": 0.5},
+        },
+        "kategori": {
+            "Umum":                   {"Reguler": 2.50, "Power Merchant": 2.00, "Power Merchant Pro": 1.50},
+            "Elektronik":             {"Reguler": 2.00, "Power Merchant": 1.50, "Power Merchant Pro": 1.00},
+            "Makanan & Minuman":      {"Reguler": 3.00, "Power Merchant": 2.50, "Power Merchant Pro": 2.00},
+            "Kesehatan & Kecantikan": {"Reguler": 2.50, "Power Merchant": 2.00, "Power Merchant Pro": 1.50},
+        },
+        "default_toko": "Reguler"
+    },
+    "TikTok Shop": {
+        "tipe_toko": {
+            "Reguler":    {"lay_tetap": 0, "tra_persen": 1.0},
+            "Bintang":    {"lay_tetap": 0, "tra_persen": 0.5},
+        },
+        "kategori": {
+            "Umum":                     {"Reguler": 3.00, "Bintang": 2.00},
+            "Elektronik":               {"Reguler": 2.00, "Bintang": 1.50},
+            "Pakaian & Aksesoris":      {"Reguler": 3.00, "Bintang": 2.00},
+            "Makanan & Minuman":        {"Reguler": 4.00, "Bintang": 3.00},
+        },
+        "default_toko": "Reguler"
+    }
+}
+
+KATA_KUNCI = {
+    "Pakaian & Aksesoris": ["baju", "celana", "kaos", "dress", "jaket", "sepatu", "sandal", "tas", "topi", "ikat pinggang", "perhiasan", "cincin", "kalung", "anting"],
+    "Elektronik": ["kabel", "charger", "adaptor", "lampu", "saklar", "stopkontak", "kipas", "setrika", "blender", "rice cooker", "speaker", "headset", "kamera", "radio"],
+    "HP & Aksesoris": ["hp", "handphone", "smartphone", "casing", "tempered", "kabel data", "baterai hp", "headset hp", "charger hp", "lcd", "touchscreen", "sim", "kartu memori", "powerbank"],
+    "Komputer & Aksesoris": ["laptop", "komputer", "pc", "mouse", "keyboard", "monitor", "printer", "kabel lan", "flashdisk", "hardisk", "ssd", "webcam", "mic"],
+    "Makanan & Minuman": ["makanan", "minuman", "snack", "keripik", "biskuit", "mie", "kopi", "teh", "susu", "gula", "beras", "telur", "daging", "sayur", "buah", "bumbu", "saus"],
+    "Kesehatan & Kecantikan": ["sabun", "sampo", "kosmetik", "masker", "krim", "lotion", "parfum", "obat", "vitamin", "suplemen", "perawatan", "wajah", "kulit", "rambut"],
+    "Ibu & Bayi": ["bayi", "anak", "popok", "dot", "botol susu", "bedak bayi", "baju bayi", "gendong", "mainan bayi", "perlengkapan ibu", "menyusui"],
+    "Rumah Tangga": ["piring", "sendok", "garpu", "gelas", "mangkuk", "ember", "sapu", "pel", "kain", "taplak", "gorden", "rak", "keranjang", "tempat sampah", "perabotan"],
+    "Otomotif": ["mobil", "motor", "helm", "ban", "oli", "spion", "lampu motor", "lampu mobil", "aksesoris mobil", "aksesoris motor", "kunci", "cover motor"],
+    "Hobi & Olahraga": ["buku", "alat tulis", "kertas", "mainan", "boneka", "bola", "raket", "baju olahraga", "sepatu olahraga", "tas olahraga", "alat musik", "seni", "koleksi"],
+    "Umum": [],
+    "Lainnya": [],
+}
+
+PPN_DEFAULT = 12.0
+
+# ==============================================
+# INISIALISASI SESI
+# ==============================================
+if "daftar_produk" not in st.session_state:
+    st.session_state.daftar_produk = []
+
+# ==============================================
+# FUNGSI BANTU
+# ==============================================
+def deteksi_kategori(nama_produk, platform):
+    teks = nama_produk.lower().strip()
+    if not teks:
+        return list(BIAYA_PLATFORM[platform]["kategori"].keys())[0]
+    daftar_kategori = list(BIAYA_PLATFORM[platform]["kategori"].keys())
+    for kat in daftar_kategori:
+        if kat in KATA_KUNCI:
+            for k in KATA_KUNCI[kat]:
+                if k in teks:
+                    return kat
+    return daftar_kategori[-1]
+
+def format_uang(angka):
+    return f"Rp {angka:,.0f}".replace(",", ".")
+
+# ==============================================
+# JUDUL
+# ==============================================
+st.set_page_config(page_title="Kalkulator Harga Jual", page_icon="🛒", layout="wide")
+st.title("🛒 KALKULATOR HARGA JUAL — Shopee • Tokopedia • TikTok")
+st.markdown("---")
+
+# ==============================================
+# BAGIAN KIRI — FORMULIR
+# ==============================================
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    st.subheader("📝 Data Produk")
+    
+    platform = st.selectbox("Pilih Platform", ["Shopee", "Tokopedia", "TikTok Shop"])
+    
+    tipe_toko_list = list(BIAYA_PLATFORM[platform]["tipe_toko"].keys())
+    tipe_toko = st.selectbox("Jenis Toko", tipe_toko_list, 
+                             index=tipe_toko_list.index(BIAYA_PLATFORM[platform]["default_toko"]))
+    
+    nama_produk = st.text_input("Nama Produk", placeholder="Contoh: Kabel data HP")
+    
+    # Deteksi kategori otomatis
+    kat_terdeteksi = deteksi_kategori(nama_produk, platform)
+    kategori_list = list(BIAYA_PLATFORM[platform]["kategori"].keys())
+    idx_kat = kategori_list.index(kat_terdeteksi) if kat_terdeteksi in kategori_list else 0
+    kategori = st.selectbox("Kategori Produk", kategori_list, index=idx_kat)
+    
+    st.markdown("---")
+    st.subheader("💰 Data Biaya")
+    
+    pokok = st.number_input("Harga Pokok Satuan (Rp)", min_value=0.0, step=100.0, format="%.0f")
+    jumlah = st.number_input("Jumlah Barang", min_value=1, value=1, step=1)
+    untung = st.number_input("Keuntungan Total (Rp)", min_value=0.0, step=100.0, format="%.0f")
+    
+    st.markdown("---")
+    st.subheader("⚙️ Biaya Platform")
+    
+    # Ambil biaya otomatis
+    data_toko = BIAYA_PLATFORM[platform]["tipe_toko"][tipe_toko]
+    lay_persen_otomatis = BIAYA_PLATFORM[platform]["kategori"][kategori][tipe_toko]
+    
+    col_b1, col_b2 = st.columns(2)
+    with col_b1:
+        lay_p = st.number_input("Biaya Layanan (%)", value=float(lay_persen_otomatis), step=0.05, format="%.2f")
+        lay_t = st.number_input("Biaya Tetap (Rp)", value=float(data_toko["lay_tetap"]), step=100.0, format="%.0f")
+    with col_b2:
+        tra_p = st.number_input("Biaya Transaksi (%)", value=float(data_toko["tra_persen"]), step=0.05, format="%.2f")
+        ppn_p = st.number_input("PPN (%)", value=float(PPN_DEFAULT), step=0.5, format="%.2f")
+
+    hitung_btn = st.button("✅ HITUNG HARGA", type="primary", use_container_width=True)
+
+# ==============================================
+# PROSES HITUNG
+# ==============================================
+hasil = None
+if hitung_btn:
+    total_persen = lay_p + tra_p + ppn_p
+    
+    if total_persen >= 100:
+        st.error("❌ Total persentase tidak boleh 100% atau lebih!")
+    else:
+        total_modal = pokok * jumlah
+        target_bersih = total_modal + untung
+        
+        # Rumus inti
+        harga_total = (target_bersih + lay_t) / (1 - total_persen / 100)
+        harga_satuan = harga_total / jumlah
+        
+        biaya_lay = harga_total * (lay_p / 100) + lay_t
+        biaya_tra = harga_total * (tra_p / 100)
+        biaya_ppn = harga_total * (ppn_p / 100)
+        potong = biaya_lay + biaya_tra + biaya_ppn
+        diterima = harga_total - potong
+        
+        hasil = {
+            "platform": platform,
+            "nama_produk": nama_produk or "Produk Tanpa Nama",
+            "tipe_toko": tipe_toko,
+            "kategori": kategori,
+            "pokok": pokok,
+            "jumlah": jumlah,
+            "untung": untung,
+            "harga_total": harga_total,
+            "harga_satuan": harga_satuan,
+            "total_modal": total_modal,
+            "biaya_lay": biaya_lay,
+            "biaya_tra": biaya_tra,
+            "biaya_ppn": biaya_ppn,
+            "potong": potong,
+            "diterima": diterima,
+            "lay_p": lay_p,
+            "lay_t": lay_t,
+            "tra_p": tra_p,
+            "ppn_p": ppn_p,
+        }
+        
+        st.success("✅ Perhitungan Selesai!")
+        
+        # Tampilkan Hasil
+        st.markdown("---")
+        st.subheader("📊 Hasil Perhitungan")
+        
+        st.info(f"""
+        **Nama Produk:** {hasil['nama_produk']}  
+        **Platform:** {hasil['platform']} | **Toko:** {hasil['tipe_toko']} | **Kategori:** {hasil['kategori']}
+        """)
+        
+        col_h1, col_h2 = st.columns(2)
+        with col_h1:
+            st.metric("Harga Pokok Satuan", format_uang(hasil['pokok']))
+            st.metric("Jumlah Barang", f"{hasil['jumlah']} buah")
+            st.metric("Total Modal", format_uang(hasil['total_modal']))
+            st.metric("Keuntungan Diinginkan", format_uang(hasil['untung']))
+        
+        with col_h2:
+            st.metric("💰 Harga Jual Satuan", format_uang(hasil['harga_satuan']))
+            st.metric("Harga Jual Total", format_uang(hasil['harga_total']))
+            st.metric("✅ Diterima ke Rekening", format_uang(hasil['diterima']))
+        
+        st.markdown("---")
+        st.subheader("📋 Rincian Biaya")
+        
+        st.write(f"- **Biaya Layanan:** {format_uang(hasil['biaya_lay'])} ({hasil['lay_p']:.2f}% + {format_uang(hasil['lay_t'])})")
+        st.write(f"- **Biaya Transaksi:** {format_uang(hasil['biaya_tra'])} ({hasil['tra_p']:.2f}%)")
+        st.write(f"- **PPN:** {format_uang(hasil['biaya_ppn'])} ({hasil['ppn_p']:.2f}%)")
+        st.write(f"- **Total Potongan:** {format_uang(hasil['potong'])}")
+        
+        # Simpan ke daftar
+        if st.button("💾 Simpan ke Daftar", use_container_width=True):
+            st.session_state.daftar_produk.append(hasil)
+            st.success("✅ Disimpan ke daftar!")
+            st.rerun()
+
+# ==============================================
+# BAGIAN KANAN — DAFTAR PRODUK
+# ==============================================
+with col2:
+    st.header("📦 Daftar Produk")
+    
+    # Tombol unduh & muat
+    col_dl, col_up, col_cl = st.columns(3)
+    with col_dl:
+        if st.session_state.daftar_produk:
+            json_data = json.dumps(st.session_state.daftar_produk, ensure_ascii=False, indent=2)
+            st.download_button("💾", data=json_data, file_name="daftar_harga.json", mime="application/json")
+    with col_up:
+        file_unggah = st.file_uploader("📂", type="json", label_visibility="collapsed")
+        if file_unggah:
+            try:
+                data_muat = json.load(file_unggah)
+                st.session_state.daftar_produk = data_muat
+                st.success(f"✅ Dimuat {len(data_muat)} produk!")
+            except:
+                st.error("❌ Gagal memuat file")
+    with col_cl:
+        if st.button("🗑️", help="Kosongkan Daftar"):
+            st.session_state.daftar_produk = []
+            st.rerun()
+    
+    # Tampilkan daftar
+    if not st.session_state.daftar_produk:
+        st.info("Belum ada produk. Hitung lalu simpan!")
+    else:
+        for i, p in enumerate(st.session_state.daftar_produk, 1):
+            with st.expander(f"{i}. [{p['platform']}] {p['nama_produk'][:20]}..."):
+                st.write(f"**Satuan:** {format_uang(p['harga_satuan'])}")
+                st.write(f"**Diterima:** {format_uang(p['diterima'])}")
+                st.write(f"**Modal:** {format_uang(p['total_modal'])}")
+                st.write(f"**Untung:** {format_uang(p['untung'])}")
+                
+                # Tombol hapus
+                if st.button(f"🗑️ Hapus #{i}", key=f"del_{i}"):
+                    st.session_state.daftar_produk.pop(i-1)
+                    st.rerun()
+        
+        # Ekspor Teks
+        if st.button("📄 Ekspor Semua ke Teks"):
+            teks_semua = ""
+            for p in st.session_state.daftar_produk:
+                teks_semua += f"{'='*40}\n"
+                teks_semua += f"    KALKULASI HARGA {p['platform']}\n"
+                teks_semua += f"{'='*40}\n"
+                teks_semua += f"Nama Produk    : {p['nama_produk']}\n"
+                teks_semua += f"Platform       : {p['platform']}\n"
+                teks_semua += f"Jenis Toko     : {p['tipe_toko']}\n"
+                teks_semua += f"Kategori       : {p['kategori']}\n"
+                teks_semua += f"{'-'*40}\n"
+                teks_semua += f"Harga Pokok    : {format_uang(p['pokok'])}\n"
+                teks_semua += f"Jumlah Barang  : {p['jumlah']}\n"
+                teks_semua += f"Keuntungan     : {format_uang(p['untung'])}\n"
+                teks_semua += f"{'-'*40}\n"
+                teks_semua += f"Harga Jual Satuan: {format_uang(p['harga_satuan'])}\n"
+                teks_semua += f"Harga Jual Total : {format_uang(p['harga_total'])}\n"
+                teks_semua += f"{'-'*40}\n"
+                teks_semua += f"✅ DITERIMA     : {format_uang(p['diterima'])}\n"
+                teks_semua += f"{'='*40}\n\n"
+            
+            st.download_button("📥 Unduh Hasil Teks", data=teks_semua, file_name="hasil_kalkulasi.txt")
+
+st.markdown("---")
+st.caption("💡 Biaya otomatis mengikuti ketentuan masing-masing platform — bisa diubah manual jika perlu")
